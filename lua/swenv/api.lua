@@ -81,12 +81,39 @@ M.get_current_venv = function()
   return current_venv
 end
 
+
+local get_dot_venv = function(base_path)
+  local dot_venv = Path:new(base_path):joinpath('.venv')
+  if not dot_venv:exists() then
+    return nil
+  else
+    local x = {
+      name = ".venv",
+      path = dot_venv:absolute(),
+      source = "venv"
+    }
+    return x
+  end
+end
+
+
 local get_venvs_for = function(base_path, source, opts)
   local venvs = {}
   if base_path == nil then
     return venvs
   end
-  local paths = scan_dir(base_path, vim.tbl_extend('force', { depth = 1, only_dirs = true, silent = true }, opts or {}))
+  local paths = scan_dir(
+    base_path,
+    vim.tbl_extend(
+      'force',
+      {
+        depth = 1,
+        only_dirs = true,
+        silent = true,
+      },
+      opts or {}
+    )
+  )
   for _, path in ipairs(paths) do
     table.insert(venvs, {
       name = Path:new(path):make_relative(base_path),
@@ -94,8 +121,13 @@ local get_venvs_for = function(base_path, source, opts)
       source = source,
     })
   end
+  if get_dot_venv(base_path) ~= nil then
+    local x = get_dot_venv(base_path)
+    table.insert(venvs, x)
+  end
   return venvs
 end
+
 
 local get_pixi_base_path = function()
   local current_dir = vim.fn.getcwd()
@@ -160,19 +192,23 @@ M.get_venvs = function(venvs_path)
   return venvs
 end
 
+
 M.pick_venv = function()
   vim.ui.select(settings.get_venvs(settings.venvs_path), {
     prompt = 'Select python venv',
     format_item = function(item)
-      return string.format('%s (%s) [%s]', item.name, item.path, item.source)
+        return string.format('%s (%s) [%s]', item.name, item.path, item.source)
     end,
-  }, function(choice)
-    if not choice then
-      return
-    end
-    set_venv(choice)
+  },
+  function(choice)
+      if not choice then
+          print("No selection made.")
+          return
+      end
+      set_venv(choice)
   end)
 end
+
 
 M.set_venv = function(name)
   local venvs = settings.get_venvs(settings.venvs_path)
