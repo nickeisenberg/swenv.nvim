@@ -92,7 +92,7 @@ local get_dot_venv = function(base_path)
       path = dot_venv:absolute(),
       source = "venv"
     }
-    return x
+    return {x}
   end
 end
 
@@ -120,10 +120,6 @@ local get_venvs_for = function(base_path, source, opts)
       path = path,
       source = source,
     })
-  end
-  if get_dot_venv(base_path) ~= nil then
-    local x = get_dot_venv(base_path)
-    table.insert(venvs, x)
   end
   return venvs
 end
@@ -183,6 +179,9 @@ end
 M.get_venvs = function(venvs_path)
   local venvs = {}
   vim.list_extend(venvs, get_venvs_for(venvs_path, 'venv'))
+  if get_dot_venv(venvs_path) ~= nil then
+    vim.list_extend(venvs, get_dot_venv(venvs_path))
+  end
   vim.list_extend(venvs, get_venvs_for(get_pixi_base_path(), 'pixi'))
   vim.list_extend(venvs, get_venvs_for(get_conda_base_path(), 'conda'))
   vim.list_extend(venvs, get_conda_base_env())
