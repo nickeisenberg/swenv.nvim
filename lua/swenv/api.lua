@@ -110,16 +110,21 @@ local get_venvs_for = function(base_path, source, opts)
         depth = 1,
         only_dirs = true,
         silent = true,
+        hidden = true
       },
       opts or {}
     )
   )
   for _, path in ipairs(paths) do
-    table.insert(venvs, {
-      name = Path:new(path):make_relative(base_path),
-      path = path,
-      source = source,
-    })
+    local _activate = Path:new(path):joinpath("bin")
+    _activate = Path:new(_activate):joinpath("activate")
+    if _activate:exists() then
+      table.insert(venvs, {
+        name = Path:new(path):make_relative(base_path),
+        path = path,
+        source = source,
+      })
+    end
   end
   return venvs
 end
@@ -179,9 +184,9 @@ end
 M.get_venvs = function(venvs_path)
   local venvs = {}
   vim.list_extend(venvs, get_venvs_for(venvs_path, 'venv'))
-  if get_dot_venv(venvs_path) ~= nil then
-    vim.list_extend(venvs, get_dot_venv(venvs_path))
-  end
+  -- if get_dot_venv(venvs_path) ~= nil then
+  --   vim.list_extend(venvs, get_dot_venv(venvs_path))
+  -- end
   vim.list_extend(venvs, get_venvs_for(get_pixi_base_path(), 'pixi'))
   vim.list_extend(venvs, get_venvs_for(get_conda_base_path(), 'conda'))
   vim.list_extend(venvs, get_conda_base_env())
